@@ -1,1 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌸 요정들의 꽃가게 키오스크 🌸</title>
+    <!-- 파이어베이스 라이브러리 로드 -->
+    <script src="[https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js](https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js)"></script>
+    <script src="[https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js](https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js)"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #FFF0F5;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            user-select: none;
+        }
+        h1 {
+            color: #FF69B4;
+            font-size: 3rem;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px white;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .flower-card {
+            background-color: white;
+            border: 5px solid #FFB6C1;
+            border-radius: 30px;
+            padding: 20px;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .flower-card:active {
+            transform: scale(0.95);
+            background-color: #FFE4E1;
+        }
+        .emoji {
+            font-size: 6rem;
+            margin: 0;
+        }
+        .name {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #555;
+            margin-top: 10px;
+        }
+        /* 주문 완료 팝업 알림 */
+        #alert-box {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.95);
+            border: 5px solid #FF69B4;
+            border-radius: 20px;
+            padding: 30px 50px;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #FF1493;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
 
+    <h1>🌸 요정들의 꽃가게 🌸</h1>
+    <div style="font-size: 1.5rem; margin-bottom: 20px; color: #888;">사고 싶은 꽃을 터치해 주세요!</div>
+
+    <div class="container">
+        <div class="flower-card" onclick="sendOrder('장미 🌹')">
+            <p class="emoji">🌹</p>
+            <p class="name">장미</p>
+        </div>
+        <div class="flower-card" onclick="sendOrder('튤립 🌷')">
+            <p class="emoji">🌷</p>
+            <p class="name">튤립</p>
+        </div>
+        <div class="flower-card" onclick="sendOrder('해바라기 🌻')">
+            <p class="emoji">🌻</p>
+            <p class="name">해바라기</p>
+        </div>
+        <div class="flower-card" onclick="sendOrder('안개꽃 💐')">
+            <p class="emoji">💐</p>
+            <p class="name">안개꽃</p>
+        </div>
+    </div>
+
+    <!-- 팝업창 -->
+    <div id="alert-box">주문 완료! 🌸</div>
+
+    <script>
+        // ★ 중요: 본인의 Firebase 설정 값으로 꼭 바꾸세요!
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        
+        // 파이어베이스 초기화
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // 주문 보내기 함수
+        function sendOrder(flowerName) {
+            const orderRef = database.ref('orders');
+            
+            // 데이터베이스에 주문 추가
+            orderRef.push({
+                flower: flowerName,
+                time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+            }).then(() => {
+                // 주문 성공 알림 보여주기
+                const alertBox = document.getElementById('alert-box');
+                alertBox.innerText = flowerName + " 주문 완료! 🎉";
+                alertBox.style.display = 'block';
+                
+                // 1.5초 뒤 팝업 숨기기
+                setTimeout(() => {
+                    alertBox.style.display = 'none';
+                }, 1500);
+            });
+        }
+    </script>
+</body>
+</html>
