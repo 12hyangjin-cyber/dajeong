@@ -1,1 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💐 실시간 주문 받는 곳 💐</title>
+    <!-- 파이어베이스 라이브러리 로드 -->
+    <script src="[https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js](https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js)"></script>
+    <script src="[https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js](https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js)"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #E6F2FF;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #1E90FF;
+            font-size: 3rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px white;
+        }
+        #order-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .order-card {
+            background-color: white;
+            border: 4px solid #1E90FF;
+            border-radius: 25px;
+            padding: 20px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+            animation: popIn 0.3s ease-out;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.7); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .order-info {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #333;
+            margin: 10px 0;
+        }
+        .order-time {
+            font-size: 1.2rem;
+            color: #777;
+        }
+        .done-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+        }
+        .done-btn:active {
+            background-color: #388E3C;
+        }
+        #no-order {
+            font-size: 2rem;
+            color: #A9A9A9;
+            margin-top: 100px;
+        }
+    </style>
+</head>
+<body>
 
+    <h1>💐 꽃집 사장님 화면 💐</h1>
+    
+    <div id="no-order">아직 들어온 주문이 없어요 😴</div>
+    <div id="order-container"></div>
+
+    <!-- 알림 소리 (원할 경우 기기 자체 소리나 알림으로 대체 가능) -->
+    <audio id="bell" src="[https://assets.mixkit.co/active_storage/sfx/2869/2869-600.wav](https://assets.mixkit.co/active_storage/sfx/2869/2869-600.wav)" preload="auto"></audio>
+
+    <script>
+        // ★ 중요: index.html에 넣은 것과 똑같은 설정을 넣으세요!
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // 파이어베이스 초기화
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const orderContainer = document.getElementById('order-container');
+        const noOrderText = document.getElementById('no-order');
+        const bellSound = document.getElementById('bell');
+
+        // 실시간 주문 감지 수신기
+        database.ref('orders').on('value', (snapshot) => {
+            orderContainer.innerHTML = ""; // 화면 초기화
+            
+            if (snapshot.exists()) {
+                noOrderText.style.display = 'none'; // '주문 없음' 안내 숨기기
+                
+                const data = snapshot.val();
+                
+                // 새로운 주문이 올 때마다 띵동 소리 내기 (태블릿 화면을 한 번 터치한 이후부터 소리가 납니다)
+                try { bellSound.play(); } catch(e) { console.log("소리 재생을 위해 화면을 한 번 터치해 주세요."); }
+
+                // 데이터를 화면에 그리기
+                Object.keys(data).forEach((key) => {
+                    const order = data[key];
+                    
+                    const card = document.createElement('div');
+                    card.className = 'order-card';
+                    card.innerHTML = `
+                        <div class="order-info">${order.flower}</div>
+                        <div class="order-time">주문시간: ${order.time}</div>
+                        <button class="done-btn" onclick="completeOrder('${key}')">🌸 손님 주기 완료</button>
+                    `;
+                    orderContainer.appendChild(card);
+                });
+            } else {
+                noOrderText.style.display = 'block'; // 주문이 없으면 안내 띄우기
+            }
+        });
+
+        // 주문 완료 처리 (DB에서 삭제 -> 실시간으로 화면에서도 사라짐)
+        function completeOrder(key) {
+            database.ref('orders/' + key).remove();
+        }
+    </script>
+</body>
+</html>
